@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAGU Takayama | 飛騨高山のリトリート</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #c5a059;
+            --dark: #1a1a1a;
+            --white: #ffffff;
+            --bg: #fdfdfd;
+            --gray: #666666;
+            --light-gray: #999999;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            font-family: 'Noto Serif JP', serif;
+            color: var(--dark);
+            background-color: var(--bg);
+            line-height: 2.1;
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+
+        /* --- ヘッダー --- */
+        header {
+            position: fixed; top: 0; left: 0; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 30px 40px; z-index: 5000; box-sizing: border-box;
+        }
+        .logo { font-size: 1.1rem; letter-spacing: 0.4rem; font-weight: 300; text-decoration: none; color: whitesmoke; }
+        .reserve-link {
+            text-decoration: none; color: var(--white); background: var(--dark);
+            padding: 12px 35px; font-size: 0.75rem; letter-spacing: 0.2rem;
+            transition: 0.4s; border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        /* --- ハンバーガーメニュー --- */
+        .mobile-menu-btn {
+            display: none; width: 60px; height: 60px; background: var(--dark);
+            border: none; cursor: pointer; position: fixed; right: 0; top: 0;
+            z-index: 7000; align-items: center; justify-content: center; outline: none;
+        }
+        .hamburger-lines { width: 24px; height: 16px; position: relative; }
+        .line { position: absolute; width: 100%; height: 1px; background-color: var(--white); transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
+        .line:nth-child(1) { top: 0; }
+        .line:nth-child(2) { top: 50%; transform: translateY(-50%); }
+        .line:nth-child(3) { bottom: 0; }
+        .is-active .line:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
+        .is-active .line:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .is-active .line:nth-child(3) { bottom: 50%; transform: translateY(50%) rotate(-45deg); }
+
+        .menu-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 26, 26, 0.98); z-index: 6000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: opacity 0.8s;
+        }
+        .menu-overlay.is-open { opacity: 1; visibility: visible; }
+        .menu-nav a { display: block; color: var(--white); text-decoration: none; font-size: 1.2rem; letter-spacing: 0.5rem; margin: 20px 0; font-weight: 200; opacity: 0; transform: translateY(20px); transition: 0.8s; text-align: center; }
+        .menu-nav a span { display: block; font-size: 0.6rem; letter-spacing: 0.2rem; margin-top: 5px; opacity: 0.6; }
+        .menu-overlay.is-open .menu-nav a { opacity: 1; transform: translateY(0); }
+
+        /* --- Hero --- */
+        .hero { height: 100vh; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #000; }
+        .hero-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url("images/背景.jpg") center/cover; filter: brightness(0.6) contrast(1.1); transform: scale(1.1); animation: imageZoomOut 20s linear forwards; }
+        .hero-content { position: relative; z-index: 10; color: var(--white); pointer-events: none; display: flex; align-items: center; }
+        .vertical-text { writing-mode: vertical-rl; font-size: 2.8rem; letter-spacing: 2rem; font-weight: 200; white-space: nowrap; }
+        .vertical-sub { writing-mode: vertical-rl; font-size: 0.75rem; letter-spacing: 0.3rem; margin-right: 20px; opacity: 0.8; font-weight: 200; }
+        
+        .hero-content span { display: inline-block; opacity: 0; filter: blur(25px); transform: translateY(-30px); animation: kikkaFadeIn 3.5s forwards; }
+        @keyframes kikkaFadeIn { to { opacity: 1; filter: blur(0); transform: translateY(0); } }
+        @keyframes imageZoomOut { from { transform: scale(1.1); } to { transform: scale(1.0); } }
+
+        /* --- Intro --- */
+        /* .intro {background-image: url("images/白背景.jpg"); background-repeat: no-repeat; background-size: cover; back} */
+        .intro { padding: 160px 10%; text-align: center; max-width: 900px; margin: 0 auto; opacity: 0; transform: translateY(100px); filter: blur(20px); transition: 3s;  background-color: whitesmoke;}
+        .intro.is-visible { opacity: 1; transform: translateY(0); filter: blur(0); }
+        .intro h2 { font-weight: 300; font-size: 1.5rem; letter-spacing: 0.3rem; margin-bottom: 20px; line-height: 2.5; }
+        .intro .en-sub-h2 { font-size: 0.7rem; letter-spacing: 0.2rem; color: var(--gold); margin-bottom: 60px; text-transform: uppercase; display: block; }
+        .intro p { font-size: 0.9rem; color: var(--gray); line-height: 2.4; margin-bottom: 30px; }
+        .intro .en-p { font-size: 0.75rem; color: var(--light-gray); line-height: 2; margin-top: 10px; }
+        
+
+        /* --- GALLERY --- */
+        .gallery { padding: 100px 0; background-color: whitesmoke; overflow: hidden;}
+        /* <!-- background-image: url("images/白背景.jpg"); background-repeat: no-repeat; background-size: cover;} --> */
+        .gallery-scroll {
+            display: flex; overflow-x: auto; 
+            padding: 0; scrollbar-width: none; 
+            cursor: grab; -webkit-overflow-scrolling: touch;
+            touch-action: pan-y !important; 
+        }
+        .gallery-scroll::-webkit-scrollbar { display: none; }
+        .gallery-item {
+            flex: 0 0 30vw; height: 45vh; margin: 0 40px;
+            opacity: 0.2; filter: blur(10px); transform: scale(0.85);
+            transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+            will-change: transform, opacity, filter;
+        }
+        .gallery-item.is-active { opacity: 1; filter: blur(0); transform: scale(1); }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+
+        /* --- OWNER THOUGHTS --- */
+        .thoughts { padding: 160px 10%; background-color: whitesmoke; display: flex; flex-direction: column; align-items: center; text-align: left; }
+         /* background-image: url("images/白背景.jpg"); background-repeat: no-repeat; background-size: cover;} */
+        .thoughts-container { max-width: 600px; opacity: 0; transform: translateY(100px); filter: blur(20px); transition: all 3s cubic-bezier(0.15, 0, 0.15, 1); }
+        .thoughts-container.is-visible { opacity: 1; transform: translateY(0); filter: blur(0); }
+        .thoughts label { display: block; font-size: 0.7rem; letter-spacing: 0.3rem; color: var(--gold); margin-bottom: 30px; text-transform: uppercase; }
+        .thoughts h3 { font-size: 1.4rem; font-weight: 300; letter-spacing: 0.2rem; margin-bottom: 10px; line-height: 2.2; }
+        .thoughts .en-h3 { font-size: 0.8rem; letter-spacing: 0.1rem; color: var(--light-gray); margin-bottom: 40px; display: block; font-weight: 300; }
+        .thoughts p { font-size: 0.9rem; color: var(--gray); margin-bottom: 10px; }
+        .thoughts .en-p { font-size: 0.75rem; color: var(--light-gray); margin-bottom: 30px; }
+        .owner-name { margin-top: 60px; font-size: 0.85rem; letter-spacing: 0.2rem; text-align: right; width: 100%; }
+
+/* --- FOOTER (Deep Blue & Wide) --- */
+.site-footer {
+    background-image: url("images/背景.jpg"); 
+    background-repeat: no-repeat; background-size: cover;
+    padding: 80px 5% 40px;
+    color: #e0e0e0; /* 基本文字色はオフホワイト */
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 上段：ブランドと情報を横に並べて高さを抑える */
+
+
+.footer-brand {
+    flex: 1;
+    text-align: left;
+}
+.f-logo-jp {
+    display: block;
+    font-size: 1.1rem;
+    letter-spacing: 0.4rem;
+    color: #fff;
+    margin-bottom: 8px;
+}
+.f-logo-en {
+    font-size: 0.6rem;
+    letter-spacing: 0.2rem;
+    color: #c5a059; /* シャンパンゴールド */
+}
+
+/* 情報群を横並びに */
+.footer-info-grid {
+    flex: 2;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+.info-item label {
+    display: block;
+    font-size: 0.6rem;
+    letter-spacing: 0.15rem;
+    text-transform: uppercase;
+    color: #888; /* ラベルは少し沈ませる */
+    margin-bottom: 15px;
+}
+
+.info-item p, .info-item a {
+    font-size: 0.8rem;
+    line-height: 1.8;
+    color: #d1d1d1;
+    text-decoration: none;
+}
+
+/* --- FOOTER (Deep Blue & Wide with Hover Effects) --- */
+.site-footer {
+    background-color: #0a1622; /* 濃い紺色：夜の静寂 */
+    padding: 80px 5% 40px;
+    color: #e0e0e0; /* 基本文字色はオフホワイト */
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.85rem;
+}
+
+.footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 上段：ブランドと情報を横に並べて高さを抑える */
+.footer-top-row {
+    align-items: center;
+    gap: 40px;
+    padding-bottom: 60px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.footer-brand {
+    flex: 1;
+    text-align: left;
+}
+.f-logo-jp {
+    display: block;
+    font-size: 1.1rem;
+    letter-spacing: 0.4rem;
+    color: #fff;
+    margin-bottom: 8px;
+}
+.f-logo-en {
+    font-size: 0.6rem;
+    letter-spacing: 0.2rem;
+    color: #c5a059; /* シャンパンゴールド */
+}
+
+/* 情報群を横並びに */
+.footer-info-grid {
+    flex: 2;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+.info-item label {
+    display: block;
+    font-size: 0.6rem;
+    letter-spacing: 0.15rem;
+    text-transform: uppercase;
+    color: #888; /* ラベルは少し沈ませる */
+    margin-bottom: 15px;
+}
+
+/* --- 基本のリンク設定（ホバーの土台） --- */
+.info-item a {
+    text-decoration: none;
+    transition: all 0.4s ease; /* すべてのプロパティを滑らかに */
+    display: inline-block; /* 動きをつけるため */
+    position: relative; /* 下線の土台 */
+}
+
+/* 1. Google Maps (ゴールドのリンク) のホバー */
+.gold-link {
+    color: #c5a059 !important;
+    font-size: 0.75rem;
+    margin-top: 10px;
+}
+.gold-link:hover {
+    color: #fff !important; /* 白に変わる */
+    transform: translateX(5px); /* 右に少し動く（矢印を強調） */
+}
+
+/* 2. 予約サイト (OTA) リンク群のホバー */
+.ota-cluster a {
+    display: block;
+    margin-bottom: 8px;
+    color: #d1d1d1;
+    font-size: 0.8rem;
+}
+/* ホバー時にゴールドになり、左にわずかな線が出る */
+.ota-cluster a:hover {
+    color: #c5a059 !important;
+    padding-left: 10px;
+}
+.ota-cluster a::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    width: 0; height: 1px;
+    background-color: #c5a059;
+    transition: 0.4s;
+    transform: translateY(-50%);
+}
+.ota-cluster a:hover::before {
+    width: 5px; /* 線が伸びる */
+}
+
+/* 3. メール & Instagram (ホワイトリンク) のホバー */
+.white-link {
+    color: #fff !important;
+    font-size: 0.8rem;
+}
+/* --- FOOTER (Deep Blue & Wide with Unified Hover) --- */
+.site-footer {
+    background-color: #0a1622;
+    padding: 80px 5% 40px;
+    color: #e0e0e0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.85rem;
+}
+
+.footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ロゴ周り */
+.footer-brand { flex: 1; text-align: left; }
+.f-logo-jp { display: block; font-size: 1.1rem; letter-spacing: 0.4rem; color: #fff; margin-bottom: 8px; }
+.f-logo-en { font-size: 0.6rem; letter-spacing: 0.2rem; color: #c5a059; }
+
+/* 情報グリッド */
+.footer-info-grid {
+    flex: 2;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+.info-item label {
+    display: block; font-size: 0.6rem; letter-spacing: 0.15rem;
+    text-transform: uppercase; color: #888; margin-bottom: 15px;
+}
+
+/* --- 共通ホバーエフェクト：中央から広がる下線 --- */
+.info-item a {
+    text-decoration: none;
+    transition: color 0.4s ease;
+    display: inline-block;
+    position: relative;
+    padding-bottom: 2px; /* 下線のためのスペース */
+    color: #d1d1d1; /* 基本の色 */
+}
+
+/* 下線の土台 */
+.info-item a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 1px;
+    background-color: #c5a059; /* ゴールド */
+    transition: width 0.4s ease, left 0.4s ease;
+}
+
+/* ホバー時の変化 */
+.info-item a:hover {
+    color: #c5a059; /* 文字もゴールドに */
+}
+
+.info-item a:hover::after {
+    width: 100%;
+    left: 0; /* 中央から広がる動き */
+}
+
+/* 個別の微調整 */
+.gold-link { color: #c5a059 !important; font-size: 0.75rem; margin-top: 10px; }
+.ota-cluster a { display: block; width: fit-content; margin-bottom: 8px; }
+.white-link { color: #fff !important; }
+
+/* 下段 */
+.footer-bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 30px;
+}
+
+/* --- Topへ戻るボタン：白飛びを完全に防止 --- */
+.back-to-top {
+    text-decoration: none;
+    color: #c5a059 !important; /* 初期状態の文字色 */
+    font-size: 0.7rem;
+    letter-spacing: 0.1rem;
+    border: 1px solid #c5a059;
+    padding: 10px 25px;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    background-color: transparent;
+    display: inline-block;
+}
+
+.back-to-top:hover {
+    /* ここに !important をつけることで、他のホバー設定を上書きします */
+    color: #92a0ad !important; 
+    background-color: #02173c !important; 
+    border-color: #042561 !important;
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* 中央から広がる下線のエフェクトがボタンに出ないように除外 */
+.back-to-top::after {
+
+    display: none !important;
+    
+}.copyright { font-size: 0.6rem; color: #555; letter-spacing: 0.05rem; margin: 0; }
+
+@media (max-width: 900px) {
+    .footer-top-row { flex-direction: column; gap: 50px; }
+    .footer-info-grid { grid-template-columns: 1fr; gap: 40px; text-align: center; }
+    .ota-cluster a { margin: 0 auto 8px; }
+    .footer-brand { text-align: center; width: 100%; }
+    .footer-bottom-row { flex-direction: column-reverse; gap: 20px; }
+}
+/* 非リンクのテキスト */
+.info-item p {
+    font-size: 0.8rem;
+    line-height: 1.8;
+    color: #d1d1d1;
+    margin: 0;
+}
+
+/* 下段：コンパクトに */
+.footer-bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 30px;
+}
+
+/* 4. Topへ戻るボタンのホバー */
+.back-to-top {
+    text-decoration: none;
+    color: #888;
+    font-size: 0.7rem;
+    letter-spacing: 0.1rem;
+    border: 1px solid #333;
+    padding: 10px 25px;
+    transition: all 0.4s ease;
+    background-color: transparent;
+}
+.back-to-top:hover {
+    color: #0a1622; /* 背景色と同じ紺色に */
+    background-color: #fff; /* 背景が白に */
+    border-color: #fff;
+    transform: translateY(-3px); /* 少し浮く */
+}
+
+.copyright {
+    font-size: 0.6rem;
+    color: #555;
+    letter-spacing: 0.05rem;
+    margin: 0;
+}
+
+/* スマホ対応：縦に並べ替える */
+@media (max-width: 900px) {
+    .footer-top-row {
+        flex-direction: column;
+        gap: 50px;
+    }
+    .footer-info-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        text-align: center;
+    }
+    .footer-brand {
+        text-align: center;
+        width: 100%;
+    }
+    .footer-bottom-row {
+        flex-direction: column-reverse;
+        gap: 20px;
+    }
+    /* スマホでは横の動きを抑制 */
+    .gold-link:hover, .ota-cluster a:hover {
+        transform: none;
+        padding-left: 0;
+    }
+    .ota-cluster a::before {
+        display: none;
+    }
+}
+
+/* リンクの色分け */
+.gold-link { color: #c5a059 !important; transition: 0.3s; }
+.white-link { color: #fff !important; }
+.ota-cluster a {
+    display: block;
+    margin-bottom: 5px;
+    color: #ebe4e4;
+    transition: 0.3s;
+}
+.ota-cluster a:hover, .gold-link:hover { color: #fff !important; opacity: 0.8; }
+
+/* 下段：コンパクトに */
+.footer-top-row {align-items: center;}
+.footer-bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 30px;
+}
+
+.back-to-top {
+    text-decoration: none;
+    color: #888;
+    font-size: 0.7rem;
+    letter-spacing: 0.1rem;
+    border: 1px solid #333;
+    padding: 8px 20px;
+    transition: 0.3s;
+}
+.back-to-top:hover {
+    color: #fff;
+    border-color: #fff;
+}
+
+.copyright {
+    font-size: 0.6rem;
+    color: #555;
+    letter-spacing: 0.05rem;
+}
+
+/* --- ヘッダーロゴの表示・非表示 --- */
+.logo {
+    font-size: 1.1rem;
+    letter-spacing: 0.4rem;
+    font-weight: 300;
+    text-decoration: none;
+    color: whitesmoke;
+    transition: opacity 0.6s ease, visibility 0.6s ease; /* 滑らかに消える設定 */
+}
+.logo1 {
+    display: block;
+    text-align: center;
+    font-size: 1.1rem;
+    letter-spacing: 0.4rem;
+    font-weight: 300;
+    text-decoration: none;
+    color: whitesmoke;
+    transition: opacity 0.6s ease, visibility 0.6s ease; /* 滑らかに消える設定 */
+}
+
+/* このクラスがついた時にロゴが消える */
+.logo-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* 消えている間はクリックできないように */
+}
+
+/* --- FOOTER (Center Aligned Deep Blue) --- */
+.site-footer {
+    background-color: #0a1622;
+    padding: 100px 5% 60px;
+    color: #e0e0e0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    text-align: center; /* すべて中央揃え */
+}
+
+.footer-inner {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* ロゴエリア */
+.footer-brand {
+    margin-bottom: 60px;
+}
+.f-logo-jp {
+    display: block;
+    font-size: 1.2rem;
+    letter-spacing: 0.5rem;
+    color: #fff;
+    margin-bottom: 10px;
+}
+.f-logo-en {
+    font-size: 0.65rem;
+    letter-spacing: 0.3rem;
+    color: #c5a059;
+}
+
+/* コンテンツエリア（縦に並べて各項目内をセンターに） */
+.footer-center-content {
+    display: flex;
+    flex-direction: column;
+    gap: 50px;
+    margin-left: auto; margin-right: auto;
+}
+
+.info-group label {
+    display: block;
+    font-size: 0.6rem;
+    letter-spacing: 0.2rem;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 15px;
+}
+
+.info-group p {
+    font-size: 0.85rem;
+    line-height: 1.8;
+    color: #d1d1d1;
+    margin-bottom: 8px;
+}
+
+/* リンク共通エフェクト：中央から広がる下線 */
+.info-group a {
+    text-decoration: none;
+    transition: color 0.4s ease;
+    display: inline-block;
+    position: relative;
+    padding-bottom: 2px;
+    color: #d1d1d1;
+}
+.info-group a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 1px;
+    background-color: #c5a059;
+    transition: width 0.4s ease, left 0.4s ease;
+}
+.info-group a:hover { color: #c5a059 !important; }
+.info-group a:hover::after { width: 100%; left: 0; }
+
+/* 予約リンクとSNSを横に並べて中央寄せ */
+.ota-inline-links, .sns-inline-links {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+}
+
+.gold-link { color: #c5a059 !important; font-size: 0.8rem; }
+.white-link { color: #fff !important; }
+
+/* 下段アクション */
+.footer-bottom-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding-top: 50px;
+}
+
+.back-to-top {
+    text-decoration: none;
+    color: #c5a059 !important;
+    font-size: 0.7rem;
+    letter-spacing: 0.1rem;
+    border: 1px solid #c5a059;
+    padding: 12px 35px;
+    transition: all 0.4s ease;
+    background-color: transparent;
+}
+
+.copyright {
+    font-size: 0.6rem;
+    color: #555;
+    letter-spacing: 0.1rem;
+}
+footer {align-items: center;}
+
+/* スマホ対応：リンクの幅が狭い時に重ならないよう調整 */
+@media (max-width: 600px) {
+    .ota-inline-links {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+/* スマホ対応：縦に並べ替える */
+@media (max-width: 900px) {
+    .footer-top-row {
+        flex-direction: column;
+        gap: 50px;
+    }
+    .footer-info-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+    .footer-brand {
+        text-align: center;
+        width: 100%;
+    }
+    .footer-bottom-row {
+        flex-direction: column-reverse;
+        gap: 20px;
+    }
+}
+@media (max-width: 768px) {
+    .horizontal-links {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+/* レスポンシブ調整 */
+@media (max-width: 768px) {
+    .footer-inner {
+        grid-template-columns: 1fr;
+        gap: 50px;
+        text-align: center;
+    }
+    .owner-name, .footer-section label {
+        text-align: center;
+    }
+}
+
+        @media (max-width: 768px) {
+            .reserve-link { display: none; }
+            .mobile-menu-btn { display: flex; }
+            .vertical-text { font-size: 2.2rem; letter-spacing: 1.2rem; }
+            .gallery-item { flex: 0 0 80vw; height: 80vw; margin: 0 10px; }
+            .fixed-reserve { display: block; }
+        }
+        .fixed-reserve { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--dark); color: white; text-align: center; padding: 22px 0; text-decoration: none; z-index: 4000; display: none; font-size: 0.85rem; letter-spacing: 0.3rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#" class="logo">御宿 凪 TAKAYAMA</a>
+        <a href="#" class="reserve-link">RESERVE / 予約</a>
+    </header>
+
+    <button class="mobile-menu-btn" id="menu-toggle">
+        <div class="hamburger-lines"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+    </button>
+
+    <div class="menu-overlay" id="menu-overlay">
+        <nav class="menu-nav">
+            <a href="#intro">CONCEPT<span>コンセプト</span></a>
+            <a href="#gallery">GALLERY<span>写真帖</span></a>
+            <a href="#thoughts">MESSAGE<span>店主の想い</span></a>
+            <a href="#" style="color: var(--gold);">RESERVE<span>ご予約</span></a>
+        </nav>
+    </div>
+
+    <div class="hero">
+        <div class="hero-img"></div>
+        <div class="hero-content">
+            <div class="vertical-sub" id="hero-sub">Simply, Be Still.</div>
+            <h1 class="vertical-text" id="vertical-hero">ただ、凪ぐ</h1>
+        </div>
+    </div>
+
+    <section id="intro" class="intro">
+        <h2>飛騨高山の静寂に<br>心と感性をひらく</h2>
+        <span class="en-sub-h2">Awaken your senses in the silence of Takayama.</span>
+        
+        <p>築百余年の時を刻む古民家。一歩中へ入れば、そこには喧騒から切り離された別世界が広がります。</p>
+        <p class="en-p">A traditional folk house with over 100 years of history. Once you step inside, you will find a world apart, detached from the hustle and bustle.</p>
+        
+        <p>「凪ぐ」は、一日一組だけの特別なリトリート。</p>
+        <p class="en-p">"NAGU" is an exclusive retreat for only one group per day.</p>
+    </section>
+
+    <section id="gallery" class="gallery">
+        <div class="gallery-scroll" id="gallery-scroll">
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1549675584-91f19337af3d?auto=format&fit=crop&w=1200"></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200"></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1582041203987-0b1979b01bd2?auto=format&fit=crop&w=1200"></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1599384666324-42f0254c4cc6?auto=format&fit=crop&w=1200"></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1599384666324-42f0254c4cc6?auto=format&fit=crop&w=1200"></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1599384666324-42f0254c4cc6?auto=format&fit=crop&w=1200"></div>
+        </div>
+
+    </section>
+
+    <section id="thoughts" class="thoughts">
+        <div class="thoughts-container" id="thoughts-container">
+            <label>Concept</label>
+            <h3>日常のノイズを脱ぎ捨て、<br>空白を愉しむ。</h3>
+            <span class="en-h3">Shed the daily noise and enjoy the void.</span>
+            
+            <p>心の波を穏やかに整え、鏡のような静寂を取り戻してほしいという願い。</p>
+            <p class="en-p">Our hope is that you will calm the waves of your heart and regain a mirror-like silence.</p>
+            
+            <div class="owner-name">NAGU Takayama 店主 / Host</div>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <a href="#" class="logo1">御宿 凪 TAKAYAMA</a>
+
+        <div class="footer-inner">
+            <div class="footer-top-row">
+                <div class="footer-brand">
+                    <!-- <span class="f-logo-jp">御宿 凪 TAKAYAMA</span>
+                    <span class="f-logo-en">NAGU Takayama Retreat</span> -->
+                </div>
+                
+                <div class="footer-center-content">
+                    <div class="info-group">
+                        <label>Access</label>
+                        <p>〒506-0006 岐阜県高山市神田町１丁目46−2</p>
+                        <a href="https://maps.app.goo.gl/9geYB7hEjLmq7Mar9" class="gold-link">Google Maps →</a>
+                    </div>
+    
+                    <div class="info-group">
+                        <label>Reservation</label>
+                        <div class="ota-inline-links">
+                            <a href="https://www.booking.com/hotel/jp/ci-gu-takayama.ja.html?aid=356980&label=gog235jc-10CAsodUIOY2ktZ3UtdGFrYXlhbWFIFVgDaHWIAQGYATO4ARnIAQzYAQPoAQH4AQGIAgGoAgG4AuuW384GwAIB0gIkNmIxNzc3MjgtMTNmOS00NWFkLTg0NGMtZWZiMzhiMmRlZjIy2AIB4AIB&sid=a88c0bcb16795d4ca08271be2b3a6e14&all_sr_blocks=1545264501_425824081_4_0_0&checkin=2026-04-16&checkout=2026-04-17&dest_id=-245205&dest_type=city&dist=0&group_adults=4&group_children=0&hapos=1&highlighted_blocks=1545264501_425824081_4_0_0&hpos=1&matching_block_id=1545264501_425824081_4_0_0&no_rooms=1&req_adults=4&req_children=0&room1=A%2CA%2CA%2CA&sb_price_type=total&sr_order=popularity&sr_pri_blocks=1545264501_425824081_4_0_0__8870400&srepoch=1775750006&srpvid=916b6fb62ab905ac&type=total&ucfs=1&">Booking.com</a>
+                            <a href="https://www.airbnb.jp/rooms/1523001951274371196?guests=1&adults=1&s=67&unique_share_id=c5f74871-7b64-46d9-9c64-989756538117">Airbnb</a>
+                            <a href="https://www.jalan.net/yad359018/">じゃらん</a>
+                        </div>
+                    </div>
+    
+                    <div class="info-group">
+                        <label>Contact & SNS</label>
+                        <p><a href="mailto:info@nagu-takayama.com" class="white-link">info@nagu-takayama.com</a></p>
+                        <a href="https://www.instagram.com/nagu_takayama/?utm_source=ig_embed&ig_rid=82593a2f-485e-4e77-96c9-4bff0c682ac9" class="white-link" style="margin-top: 5px; display: inline-block;">Instagram</a>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="footer-bottom-actions">
+                <a href="#" id="to-top" class="back-to-top">Top ↑</a>
+                <p class="copyright">© 2026 NAGU Takayama.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <a href="https://www.airbnb.jp/rooms/1523001951274371196?guests=1&adults=1&s=67&unique_share_id=c5f74871-7b64-46d9-9c64-989756538117" class="fixed-reserve">RESERVE / ご予約</a>
+
+    <script>
+        // --- ヒーローアニメーション ---
+        const hText = document.getElementById('vertical-hero');
+        const hSub = document.getElementById('hero-sub');
+        
+        // メインテキストのアニメーション
+        hText.innerHTML = [...hText.textContent].map((c, i) => `<span style="animation-delay:${1+i*0.5}s">${c}</span>`).join("");
+        // サブテキスト（英語）のアニメーション
+        hSub.style.opacity = "0";
+        setTimeout(() => {
+            hSub.style.transition = "opacity 3s ease";
+            hSub.style.opacity = "0.7";
+        }, 3000);
+
+        // --- メニュー制御 ---
+        const menuToggle = document.getElementById('menu-toggle');
+        const overlay = document.getElementById('menu-overlay');
+        const menuLinks = document.querySelectorAll('.menu-nav a');
+
+        function toggleMenu() {
+            const isOpen = overlay.classList.toggle('is-open');
+            menuToggle.classList.toggle('is-active');
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+        }
+
+        menuToggle.addEventListener('click', toggleMenu);
+        menuLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (overlay.classList.contains('is-open')) toggleMenu();
+            });
+        });
+
+        const obs = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add('is-visible')), {threshold:0.1});
+        obs.observe(document.getElementById('intro'));
+        obs.observe(document.getElementById('thoughts-container'));
+
+        // --- ギャラリー：自動スクロール & ループ ---
+        const scrollEl = document.getElementById('gallery-scroll');
+        const originalItems = Array.from(scrollEl.querySelectorAll('.gallery-item'));
+        originalItems.forEach(item => scrollEl.appendChild(item.cloneNode(true)));
+        originalItems.reverse().forEach(item => scrollEl.insertBefore(item.cloneNode(true), scrollEl.firstChild));
+
+        let isDragging = false;
+        let autoScrollSpeed = 0.8; 
+
+        const updateGallery = () => {
+            const items = scrollEl.querySelectorAll('.gallery-item');
+            const scrollCenter = scrollEl.getBoundingClientRect().left + scrollEl.offsetWidth / 2;
+            items.forEach(item => {
+                const rect = item.getBoundingClientRect();
+                const itemCenter = rect.left + rect.width / 2;
+                if (Math.abs(scrollCenter - itemCenter) < rect.width / 2.5) {
+                    item.classList.add('is-active');
+                } else {
+                    item.classList.remove('is-active');
+                }
+            });
+            const itemWidth = originalItems[0].offsetWidth + 80;
+            const totalWidth = itemWidth * originalItems.length;
+            if (scrollEl.scrollLeft >= totalWidth * 2) scrollEl.scrollLeft = totalWidth;
+            if (scrollEl.scrollLeft <= 0) scrollEl.scrollLeft = totalWidth;
+        };
+
+        const initGallery = () => {
+            const itemWidth = originalItems[0].offsetWidth + 80;
+            const offset = (scrollEl.offsetWidth / 2) - (itemWidth / 2);
+            scrollEl.scrollLeft = (itemWidth * originalItems.length) - offset;
+            updateGallery();
+        };
+
+        window.addEventListener('load', () => {
+            setTimeout(initGallery, 100);
+            function step() {
+                if (!isDragging) {
+                    scrollEl.scrollLeft += autoScrollSpeed;
+                }
+                requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        });
+
+        scrollEl.addEventListener('scroll', updateGallery, { passive: true });
+        window.addEventListener('resize', initGallery);
+
+        // ドラッグ
+        let isDown = false, startX, sLeft;
+        scrollEl.addEventListener('mousedown', (e) => {
+            isDown = true; isDragging = true;
+            startX = e.pageX - scrollEl.offsetLeft;
+            sLeft = scrollEl.scrollLeft;
+            scrollEl.style.cursor = 'grabbing';
+        });
+        scrollEl.addEventListener('mouseleave', () => { isDown = false; isDragging = false; scrollEl.style.cursor = 'grab'; });
+        scrollEl.addEventListener('mouseup', () => { isDown = false; isDragging = false; scrollEl.style.cursor = 'grab'; });
+        scrollEl.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - scrollEl.offsetLeft;
+            scrollEl.scrollLeft = sLeft - (x - startX) * 2;
+        });
+        document.getElementById('to-top').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+});
+// --- ヘッダーロゴの制御 ---
+const headerLogo = document.querySelector('.logo');
+const footerElement = document.querySelector('.site-footer');
+
+const footerObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            // フッターが見えたらロゴを隠す
+            headerLogo.classList.add('logo-hidden');
+        } else {
+            // フッターが消えたらロゴを再表示
+            headerLogo.classList.remove('logo-hidden');
+        }
+    });
+}, { 
+    threshold: 0.1 // フッターが10%でも見えたら反応
+});
+
+footerObserver.observe(footerElement);
+    </script>
+</body>
+</html>
