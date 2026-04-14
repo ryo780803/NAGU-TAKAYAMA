@@ -843,89 +843,96 @@ footer {align-items: center;}
         const obs = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add('is-visible')), {threshold:0.1});
         obs.observe(document.getElementById('intro'));
         obs.observe(document.getElementById('thoughts-container'));
-
-// --- GALLERY SCRIPT ---
-const scrollEl = document.getElementById('gallery-scroll');
-    const originalItems = Array.from(scrollEl.querySelectorAll('.gallery-item'));
-    
-    // クローンの作成
-    originalItems.forEach(item => scrollEl.appendChild(item.cloneNode(true)));
-    originalItems.reverse().forEach(item => scrollEl.insertBefore(item.cloneNode(true), scrollEl.firstChild));
-
-    let isDragging = false;
-    let autoScrollSpeed = 0.8; 
-
-    const updateGallery = () => {
-        const items = scrollEl.querySelectorAll('.gallery-item');
-        const scrollCenter = scrollEl.getBoundingClientRect().left + scrollEl.offsetWidth / 2;
+        (function() {
+        const scrollEl = document.getElementById('gallery-scroll');
+        const items = Array.from(scrollEl.querySelectorAll('.gallery-item'));
         
-        items.forEach(item => {
-            const rect = item.getBoundingClientRect();
-            const itemCenter = rect.left + rect.width / 2;
-            // 中央付近に来たアイテムをアクティブにする
-            if (Math.abs(scrollCenter - itemCenter) < rect.width / 2.5) {
-                item.classList.add('is-active');
-            } else {
-                item.classList.remove('is-active');
+        // クローン作成
+        items.forEach(item => scrollEl.appendChild(item.cloneNode(true)));
+        items.reverse().forEach(item => scrollEl.insertBefore(item.cloneNode(true), scrollEl.firstChild));
+
+        let isInteracting = false;
+        let speed = 0.8;
+        let animationId;
+
+        const getMetrics = () => {
+            const firstItem = scrollEl.querySelector('.gallery-item');
+            const style = window.getComputedStyle(firstItem);
+            const margin = parseFloat(style.marginLeft) + parseFloat(style.marginRight);
+            return {
+                width: firstItem.offsetWidth + margin,
+                total: (firstItem.offsetWidth + margin) * items.length,
+                singleWidth: firstItem.offsetWidth
+            };
+        };
+
+        const update = () => {
+            const metrics = getMetrics();
+            const scrollCenter = scrollEl.getBoundingClientRect().left + scrollEl.offsetWidth / 2;
+            
+            // フォーカス処理
+            const allItems = scrollEl.querySelectorAll('.gallery-item');
+            allItems.forEach(item => {
+                const rect = item.getBoundingClientRect();
+                const center = rect.left + rect.width / 2;
+                if (Math.abs(scrollCenter - center) < rect.width / 2.5) {
+                    item.classList.add('is-active');
+                } else {
+                    item.classList.remove('is-active');
+                }
+            });
+            
+            // ループ処理
+            if (scrollEl.scrollLeft >= metrics.total * 2) scrollEl.scrollLeft = metrics.total;
+            if (scrollEl.scrollLeft <= 0) scrollEl.scrollLeft = metrics.total;
+        };
+
+        const init = () => {
+            const metrics = getMetrics();
+            const offset = (scrollEl.offsetWidth / 2) - (metrics.singleWidth / 2);
+            scrollEl.scrollLeft = metrics.total - offset;
+            update();
+        };
+
+        const step = () => {
+            if (!isInteracting) {
+                scrollEl.scrollLeft += speed;
             }
+            animationId = requestAnimationFrame(step);
+        };
+
+        // イベント登録
+        window.addEventListener('load', () => {
+            init();
+            animationId = requestAnimationFrame(step);
         });
-        
-        // 無限ループの計算
-        const itemStyle = window.getComputedStyle(scrollEl.querySelector('.gallery-item'));
-        const itemMargin = parseFloat(itemStyle.marginLeft) + parseFloat(itemStyle.marginRight);
-        const itemWidth = scrollEl.querySelector('.gallery-item').offsetWidth + itemMargin;
-        const totalWidth = itemWidth * originalItems.length;
+        window.addEventListener('resize', init);
+        scrollEl.addEventListener('scroll', update, { passive: true });
 
-        if (scrollEl.scrollLeft >= totalWidth * 2) scrollEl.scrollLeft = totalWidth;
-        if (scrollEl.scrollLeft <= 0) scrollEl.scrollLeft = totalWidth;
-    };
+        // スマホ・マウス共通の停止・再開処理
+        const startInteraction = () => { isInteracting = true; };
+        const endInteraction = () => { isInteracting = false; };
 
-    const initGallery = () => {
-        const itemStyle = window.getComputedStyle(scrollEl.querySelector('.gallery-item'));
-        const itemMargin = parseFloat(itemStyle.marginLeft) + parseFloat(itemStyle.marginRight);
-        const itemWidth = scrollEl.querySelector('.gallery-item').offsetWidth + itemMargin;
-        
-        // 正確に中央へ配置するためのオフセット計算
-        const offset = (scrollEl.offsetWidth / 2) - (scrollEl.querySelector('.gallery-item').offsetWidth / 2);
-        scrollEl.scrollLeft = (itemWidth * originalItems.length) - offset;
-        updateGallery();
-    };
-
-    // 実行処理
-    window.addEventListener('load', () => {
-        setTimeout(initGallery, 150);
-        function step() {
-            if (!isDragging) {
-                scrollEl.scrollLeft += autoScrollSpeed;
-            }
-            requestAnimationFrame(step);
-        }
-        requestAnimationFrame(step);
-    });
-
-    scrollEl.addEventListener('scroll', updateGallery, { passive: true });
-    window.addEventListener('resize', initGallery);
-
-    // スマホでのタッチ操作判定
-    scrollEl.addEventListener('touchstart', () => { isDragging = true; }, { passive: true });
-    scrollEl.addEventListener('touchend', () => { isDragging = false; }, { passive: true });
-
-    // マウスドラッグ操作
-    let isDown = false, startX, sLeft;
-    scrollEl.addEventListener('mousedown', (e) => {
-        isDown = true; isDragging = true;
-        startX = e.pageX - scrollEl.offsetLeft;
-        sLeft = scrollEl.scrollLeft;
-        scrollEl.style.cursor = 'grabbing';
-    });
-    scrollEl.addEventListener('mouseleave', () => { isDown = false; isDragging = false; scrollEl.style.cursor = 'grab'; });
-    scrollEl.addEventListener('mouseup', () => { isDown = false; isDragging = false; scrollEl.style.cursor = 'grab'; });
-    scrollEl.addEventListener('mousemove', (e) => {
-        if (!isDown) return;
-        e.preventDefault();
-        const x = e.pageX - scrollEl.offsetLeft;
-        scrollEl.scrollLeft = sLeft - (x - startX) * 2;
-    });
+        scrollEl.addEventListener('touchstart', startInteraction, { passive: true });
+        scrollEl.addEventListener('touchend', endInteraction, { passive: true });
+        scrollEl.addEventListener('mousedown', (e) => {
+            startInteraction();
+            let startX = e.pageX - scrollEl.offsetLeft;
+            let sLeft = scrollEl.scrollLeft;
+            
+            const mouseMove = (me) => {
+                const x = me.pageX - scrollEl.offsetLeft;
+                scrollEl.scrollLeft = sLeft - (x - startX) * 2;
+            };
+            const mouseUp = () => {
+                endInteraction();
+                window.removeEventListener('mousemove', mouseMove);
+                window.removeEventListener('mouseup', mouseUp);
+            };
+            window.addEventListener('mousemove', mouseMove);
+            window.addEventListener('mouseup', mouseUp);
+        });
+    })();
 
 // --- ヘッダーロゴの制御 ---
 const headerLogo = document.querySelector('.logo');
