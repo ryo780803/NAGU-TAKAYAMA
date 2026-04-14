@@ -843,47 +843,52 @@ footer {align-items: center;}
         const obs = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add('is-visible')), {threshold:0.1});
         obs.observe(document.getElementById('intro'));
         obs.observe(document.getElementById('thoughts-container'));
+       
         (function() {
         const scrollEl = document.getElementById('gallery-scroll');
         if (!scrollEl) return;
 
-        const items = Array.from(scrollEl.querySelectorAll('.gallery-item'));
+        const originalItems = Array.from(scrollEl.querySelectorAll('.gallery-item'));
         
-        // クローンの作成
-        items.forEach(item => scrollEl.appendChild(item.cloneNode(true)));
-        items.reverse().forEach(item => scrollEl.insertBefore(item.cloneNode(true), scrollEl.firstChild));
+        // 二重にクローンを作成しないようチェックしてクローン作成
+        if (scrollEl.querySelectorAll('.gallery-item').length === originalItems.length) {
+            originalItems.forEach(item => scrollEl.appendChild(item.cloneNode(true)));
+            originalItems.reverse().forEach(item => scrollEl.insertBefore(item.cloneNode(true), scrollEl.firstChild));
+        }
 
         let isInteracting = false;
-        const speed = 0.8; 
+        let speed = 0.8;
+        let animationId;
 
         const getMetrics = () => {
             const firstItem = scrollEl.querySelector('.gallery-item');
+            if (!firstItem) return null;
             const style = window.getComputedStyle(firstItem);
             const margin = parseFloat(style.marginLeft) + parseFloat(style.marginRight);
-            const width = firstItem.offsetWidth + margin;
             return {
-                itemWidth: width,
-                total: width * items.length,
+                itemWidth: firstItem.offsetWidth + margin,
+                total: (firstItem.offsetWidth + margin) * originalItems.length,
                 singleWidth: firstItem.offsetWidth
             };
         };
 
         const update = () => {
             const metrics = getMetrics();
+            if (!metrics || metrics.singleWidth === 0) return;
+
             const scrollCenter = scrollEl.getBoundingClientRect().left + scrollEl.offsetWidth / 2;
-            
             const allItems = scrollEl.querySelectorAll('.gallery-item');
+            
             allItems.forEach(item => {
                 const rect = item.getBoundingClientRect();
                 const center = rect.left + rect.width / 2;
-                if (Math.abs(scrollCenter - center) < rect.width / 2.5) {
+                if (Math.abs(scrollCenter - center) < rect.width / 2) {
                     item.classList.add('is-active');
                 } else {
                     item.classList.remove('is-active');
                 }
             });
             
-            // ループ境界チェック
             if (scrollEl.scrollLeft >= metrics.total * 2) {
                 scrollEl.scrollLeft -= metrics.total;
             } else if (scrollEl.scrollLeft <= 0) {
@@ -893,37 +898,47 @@ footer {align-items: center;}
 
         const init = () => {
             const metrics = getMetrics();
+            if (!metrics || metrics.singleWidth === 0) {
+                // サイズがまだ取れない場合は100ms後に再試行
+                setTimeout(init, 100);
+                return;
+            }
             const offset = (scrollEl.offsetWidth / 2) - (metrics.singleWidth / 2);
             scrollEl.scrollLeft = metrics.total - offset;
             update();
         };
 
-        // メインループ
         function step() {
             if (!isInteracting) {
                 scrollEl.scrollLeft += speed;
             }
-            requestAnimationFrame(step);
+            update();
+            animationId = requestAnimationFrame(step);
         }
 
-        // スマホでも確実に初期化・開始
-        window.addEventListener('load', () => {
-            setTimeout(() => {
+        // スマホでの挙動を安定させるため、DOMContentLoadedとloadの両方で待機
+        if (document.readyState === 'complete') {
+            init();
+            requestAnimationFrame(step);
+        } else {
+            window.addEventListener('load', () => {
                 init();
                 requestAnimationFrame(step);
-            }, 200); // 読み込み完了から少し待って位置を確定
-        });
+            });
+        }
 
         window.addEventListener('resize', init);
-        scrollEl.addEventListener('scroll', update, { passive: true });
-
-        // 操作中は自動スクロール停止
-        scrollEl.addEventListener('touchstart', () => { isInteracting = true; }, { passive: true });
+        
+        // スマホのタッチ操作
+        scrollEl.addEventListener('touchstart', () => { 
+            isInteracting = true; 
+        }, { passive: true });
+        
         scrollEl.addEventListener('touchend', () => { 
-            setTimeout(() => { isInteracting = false; }, 50); 
+            isInteracting = false; 
         }, { passive: true });
 
-        // マウス用ドラッグ
+        // マウスドラッグ
         let isDown = false, startX, sLeft;
         scrollEl.addEventListener('mousedown', (e) => {
             isDown = true; isInteracting = true;
@@ -931,6 +946,13 @@ footer {align-items: center;}
             sLeft = scrollEl.scrollLeft;
             scrollEl.style.cursor = 'grabbing';
         });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            const x = e.pageX - scrollEl.offsetLeft;
+            scrollEl.scrollLeft = sLeft - (x - startX) * 1.5;
+        });
+
         window.addEventListener('mouseup', () => {
             if (isDown) {
                 isDown = false;
@@ -938,13 +960,7 @@ footer {align-items: center;}
                 scrollEl.style.cursor = 'grab';
             }
         });
-        window.addEventListener('mousemove', (e) => {
-            if (!isDown) return;
-            const x = e.pageX - scrollEl.offsetLeft;
-            scrollEl.scrollLeft = sLeft - (x - startX) * 2;
-        });
-    })();
-// --- ヘッダーロゴの制御 ---
+    })();// --- ヘッダーロゴの制御 ---
 const headerLogo = document.querySelector('.logo');
 const footerElement = document.querySelector('.site-footer');
 
