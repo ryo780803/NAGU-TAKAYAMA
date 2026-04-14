@@ -87,25 +87,39 @@
         .intro .en-p { font-size: 0.75rem; color: var(--light-gray); line-height: 2; margin-top: 10px; }
         
 
-        /* --- GALLERY --- */
-        .gallery { padding: 100px 0; background-color: whitesmoke; overflow: hidden;}
-        /* <!-- background-image: url("images/白背景.jpg"); background-repeat: no-repeat; background-size: cover;} --> */
-        .gallery-scroll {
-            display: flex; overflow-x: auto; 
-            padding: 0; scrollbar-width: none; 
-            cursor: grab; -webkit-overflow-scrolling: touch;
-            touch-action: pan-y !important; 
-        }
-        .gallery-scroll::-webkit-scrollbar { display: none; }
-        .gallery-item {
-            flex: 0 0 30vw; height: 45vh; margin: 0 40px;
-            opacity: 0.2; filter: blur(10px); transform: scale(0.85);
-            transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
-            will-change: transform, opacity, filter;
-        }
-        .gallery-item.is-active { opacity: 1; filter: blur(0); transform: scale(1); }
-        .gallery-item img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+/* --- GALLERY --- */
+.gallery { padding: 100px 0; background-color: whitesmoke; overflow: hidden;}
+.gallery-scroll {
+    display: flex; 
+    /* 自動スクロールと競合するため auto に変更 */
+    overflow-x: hidden; 
+    padding: 0; 
+    scrollbar-width: none; 
+    cursor: grab;
+    touch-action: pan-y !important; 
+    /* 横幅を中身に合わせる */
+    width: max-content;
+}
+.gallery-scroll::-webkit-scrollbar { display: none; }
+.gallery-item {
+    flex: 0 0 30vw; height: 45vh; margin: 0 40px;
+    opacity: 0.2; filter: blur(10px); transform: scale(0.85);
+    transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform, opacity, filter;
+}
+.gallery-item.is-active { opacity: 1; filter: blur(0); transform: scale(1); }
+.gallery-item img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
+@media (max-width: 768px) {
+    /* スマホで左に寄らないよう幅を調整 */
+    .gallery-item { flex: 0 0 80vw; height: 80vw; margin: 0 10px; }
+}
+
+/* 確実に動かすためのアニメーション */
+@keyframes continuous-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
         /* --- OWNER THOUGHTS --- */
         .thoughts { padding: 160px 10%; background-color: whitesmoke; display: flex; flex-direction: column; align-items: center; text-align: left; }
          /* background-image: url("images/白背景.jpg"); background-repeat: no-repeat; background-size: cover;} */
@@ -848,119 +862,47 @@ footer {align-items: center;}
         const scrollEl = document.getElementById('gallery-scroll');
         if (!scrollEl) return;
 
-        const originalItems = Array.from(scrollEl.querySelectorAll('.gallery-item'));
-        
-        // 二重にクローンを作成しないようチェックしてクローン作成
-        if (scrollEl.querySelectorAll('.gallery-item').length === originalItems.length) {
-            originalItems.forEach(item => scrollEl.appendChild(item.cloneNode(true)));
-            originalItems.reverse().forEach(item => scrollEl.insertBefore(item.cloneNode(true), scrollEl.firstChild));
-        }
+        // 1. 中身を複製して繋ぎ目をなくす
+        const items = Array.from(scrollEl.querySelectorAll('.gallery-item'));
+        const content = scrollEl.innerHTML;
+        scrollEl.innerHTML = content + content;
 
-        let isInteracting = false;
-        let speed = 0.8;
-        let animationId;
+        // 2. CSSアニメーションを開始
+        // 速度調整：秒数を大きくすると遅くなります
+        scrollEl.style.animation = "continuous-scroll 40s linear infinite";
 
-        const getMetrics = () => {
-            const firstItem = scrollEl.querySelector('.gallery-item');
-            if (!firstItem) return null;
-            const style = window.getComputedStyle(firstItem);
-            const margin = parseFloat(style.marginLeft) + parseFloat(style.marginRight);
-            return {
-                itemWidth: firstItem.offsetWidth + margin,
-                total: (firstItem.offsetWidth + margin) * originalItems.length,
-                singleWidth: firstItem.offsetWidth
-            };
-        };
-
-        const update = () => {
-            const metrics = getMetrics();
-            if (!metrics || metrics.singleWidth === 0) return;
-
-            const scrollCenter = scrollEl.getBoundingClientRect().left + scrollEl.offsetWidth / 2;
-            const allItems = scrollEl.querySelectorAll('.gallery-item');
+        // 3. 中央に来た時のふわっとした演出（is-active）を維持
+        const updateFocus = () => {
+            const containerCenter = window.innerWidth / 2;
+            const currentItems = scrollEl.querySelectorAll('.gallery-item');
             
-            allItems.forEach(item => {
+            currentItems.forEach(item => {
                 const rect = item.getBoundingClientRect();
-                const center = rect.left + rect.width / 2;
-                if (Math.abs(scrollCenter - center) < rect.width / 2) {
+                const itemCenter = rect.left + rect.width / 2;
+                
+                // 画面中央付近にきたら明るくする
+                if (Math.abs(containerCenter - itemCenter) < rect.width / 1.5) {
                     item.classList.add('is-active');
                 } else {
                     item.classList.remove('is-active');
                 }
             });
-            
-            if (scrollEl.scrollLeft >= metrics.total * 2) {
-                scrollEl.scrollLeft -= metrics.total;
-            } else if (scrollEl.scrollLeft <= 0) {
-                scrollEl.scrollLeft += metrics.total;
-            }
+            requestAnimationFrame(updateFocus);
         };
 
-        const init = () => {
-            const metrics = getMetrics();
-            if (!metrics || metrics.singleWidth === 0) {
-                // サイズがまだ取れない場合は100ms後に再試行
-                setTimeout(init, 100);
-                return;
-            }
-            const offset = (scrollEl.offsetWidth / 2) - (metrics.singleWidth / 2);
-            scrollEl.scrollLeft = metrics.total - offset;
-            update();
-        };
+        // 演出の開始
+        requestAnimationFrame(updateFocus);
 
-        function step() {
-            if (!isInteracting) {
-                scrollEl.scrollLeft += speed;
-            }
-            update();
-            animationId = requestAnimationFrame(step);
-        }
-
-        // スマホでの挙動を安定させるため、DOMContentLoadedとloadの両方で待機
-        if (document.readyState === 'complete') {
-            init();
-            requestAnimationFrame(step);
-        } else {
-            window.addEventListener('load', () => {
-                init();
-                requestAnimationFrame(step);
-            });
-        }
-
-        window.addEventListener('resize', init);
+        // スマホで触れている間は止まるようにする（読みやすさのため）
+        scrollEl.addEventListener('touchstart', () => {
+            scrollEl.style.animationPlayState = 'paused';
+        }, {passive: true});
         
-        // スマホのタッチ操作
-        scrollEl.addEventListener('touchstart', () => { 
-            isInteracting = true; 
-        }, { passive: true });
-        
-        scrollEl.addEventListener('touchend', () => { 
-            isInteracting = false; 
-        }, { passive: true });
-
-        // マウスドラッグ
-        let isDown = false, startX, sLeft;
-        scrollEl.addEventListener('mousedown', (e) => {
-            isDown = true; isInteracting = true;
-            startX = e.pageX - scrollEl.offsetLeft;
-            sLeft = scrollEl.scrollLeft;
-            scrollEl.style.cursor = 'grabbing';
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!isDown) return;
-            const x = e.pageX - scrollEl.offsetLeft;
-            scrollEl.scrollLeft = sLeft - (x - startX) * 1.5;
-        });
-
-        window.addEventListener('mouseup', () => {
-            if (isDown) {
-                isDown = false;
-                isInteracting = false;
-                scrollEl.style.cursor = 'grab';
-            }
-        });
-    })();// --- ヘッダーロゴの制御 ---
+        scrollEl.addEventListener('touchend', () => {
+            scrollEl.style.animationPlayState = 'running';
+        }, {passive: true});
+    })();
+// --- ヘッダーロゴの制御 ---
 const headerLogo = document.querySelector('.logo');
 const footerElement = document.querySelector('.site-footer');
 
